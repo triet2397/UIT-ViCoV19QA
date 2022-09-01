@@ -1,0 +1,11 @@
+numpy==1.17.4
+nltk==3.4.5
+torchtext==0.4.0
+scikit_learn==0.23.2
+spacy==2.3.5
+textblob==0.15.3
+torch==1.6.0 
+torchvision==0.7.0
+tqdm==4.64.0
+underthesea==1.3.3
+rouge_score==0.1.2
