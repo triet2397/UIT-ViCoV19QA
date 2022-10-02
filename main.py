@@ -13,9 +13,11 @@ from torchtext.data import BucketIterator
 
 from models.seq2seq import Seq2Seq
 from utils.checkpoint import Chechpoint
-#from trainer.trainer import Trainer
-#from utils.scorer import BleuScorer
-#from evaluator.predictor import Predictor
+from trainer.trainer import Trainer
+from utils.scorer import BleuScorer
+from utils.prepare import prepare_set
+from evaluator.predictor import Predictor
+
 from utils.verbaldataset import VerbalDataset
 from utils.constants import (
     SEED, CUDA, CPU, PAD_TOKEN, RNN_NAME, CNN_NAME,
@@ -122,23 +124,36 @@ def main():
     valid_loss = trainer.evaluator.evaluate(model, valid_iterator)
     test_loss = trainer.evaluator.evaluate(model, test_iterator)
 
-    # calculate blue score for valid and test data
-    predictor = Predictor(model, src_vocab, trg_vocab, DEVICE)
-    valid_scorer = BleuScorer()
-    test_scorer = BleuScorer()
-    #bleu score
-    valid_scorer.data_score(valid_data.examples, predictor)
-    test_scorer.data_score(test_data.examples, predictor)
-    # meteor score
-    #valid_scorer.data_meteor_score(valid_data.examples, predictor)
-    #test_scorer.data_meteor_score(test_data.examples, predictor)
 
-    print(f'| Val. Loss: {valid_loss:.3f} | Test PPL: {math.exp(valid_loss):7.3f} |')
-    print(f'| Val. Data Average BLEU score {valid_scorer.average_score()} |')
-    print(f'| Val. Data Average METEOR score {valid_scorer.average_meteor_score()} |')
-    print(f'| Test Loss: {test_loss:.3f} | Test PPL: {math.exp(test_loss):7.3f} |')
-    print(f'| Test Data Average BLEU score {test_scorer.average_score()} |')
-    print(f'| Test Data Average METEOR score {test_scorer.average_meteor_score()} |')
+
+    val_ref = [list(filter(None, np.delete(i,[0,1]))) for i in val.values]
+    test_ref = [list(filter(None, np.delete(i,[0,1]))) for i in test.values]
+    
+
+    # calculate blue score for valid and test data
+    new_val = prepare_set(val)
+    new_test = prepare_set(test)
+    
+    predictor = Predictor(model, src_vocab, trg_vocab, DEVICE)
+    #valid_scorer = BleuScorer()
+    test_scorer = BleuScorer()
+    
+    #valid_scorer.data_score(new_valid, predictor,path)
+    test_scorer.data_score(new_test, predictor,path)
+    
+    r = {'ppl':[round(math.exp(test_loss),3)],
+     'BLEU-1':[test_scorer.average_score()[0]*100],
+     'BLEU-4':[test_scorer.average_score()[1]*100],
+     'METEOR':[test_scorer.average_meteor_score()*100],
+     'ROUGE-L':[test_scorer.average_rouge_score()*100]}
+    df_result = pd.DataFrame(data=r)
+    
+#     print(f'| Val. Loss: {valid_loss:.3f} | Test PPL: {math.exp(valid_loss):7.3f} |')
+#     print(f'| Val. Data Average BLEU score {valid_scorer.average_score()} |')
+#     print(f'| Val. Data Average METEOR score {valid_scorer.average_meteor_score()} |')
+#     print(f'| Test Loss: {test_loss:.3f} | Test PPL: {math.exp(test_loss):7.3f} |')
+#     print(f'| Test Data Average BLEU score {test_scorer.average_score()} |')
+#     print(f'| Test Data Average METEOR score {test_scorer.average_meteor_score()} |')
 
 
 

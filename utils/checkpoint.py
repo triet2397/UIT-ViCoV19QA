@@ -1,14 +1,13 @@
 class Checkpoint(object):
     """Checkpoint class"""
     @staticmethod
-    def save(model,cell, path):
+    def save(model):
         """Save model using name"""
-        name_tmp = model.name+"_"+ cell if model.name==RNN_NAME else model.name
-        name = f'{name_tmp}.pt'
+        name = f'{model.name}.pt'
         torch.save(model.state_dict(), path+name)
 
     @staticmethod
-    def load(model,path, name):
-        """Load model using name"""
-        model.load_state_dict(torch.load(path+name))
+    def load(model):
+        name = f'{model.name}.pt'
+        model.load_state_dict(torch.load(name))
         return model
