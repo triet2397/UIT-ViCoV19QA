@@ -52,15 +52,56 @@ def set_SEED():
     torch.backends.cudnn.benchmark = False
     torch.backends.cudnn.deterministic = True
 
+def prepare_data(train, val, test):
+    
+    train_m = train.copy()
+    val_m = val.copy()
+    test_m = test.copy()
+    
+    train_m = train_m.melt(id_vars=['id',"Question"],value_name="Answer")
+    train_m = train_m[train_m['Answer'].astype(bool)].drop(['id','variable'],axis=1).values
+    
+    val_m = val_m.melt(id_vars=['id',"Question"],value_name="Answer")
+    val_m = val_m[val_m['Answer'].astype(bool)].drop(['id','variable'],axis=1).values
+    
+    test_m = test_m.melt(id_vars=['id',"Question"],value_name="Answer")
+    test_m = test_m[test_m['Answer'].astype(bool)].drop(['id','variable'],axis=1).values
 
-def main():
+    dataset = VerbalDataset(train_m,val_m,test_m)
+    dataset.load_data_and_fields()
+    src_vocab, trg_vocab = dataset.get_vocabs()
+    train_data, valid_data, test_data = dataset.get_data()
+    
+    print('--------------------------------')
+    print(f"After melting:")
+    print(f"  Training data: {len(train_data.examples)}")
+    print(f"  Evaluation data: {len(valid_data.examples)}")
+    print(f"  Testing data: {len(test_data.examples)}")
+    print('--------------------------------')
+    print(f'Question example: {train_data.examples[2].src}\n')
+    print(f'Answer example: {train_data.examples[2].trg}')
+    print('--------------------------------')
+    print(f"Unique tokens in questions vocabulary: {len(src_vocab)}")
+    print(f"Unique tokens in all available answers vocabulary: {len(trg_vocab)}")
+    print('--------------------------------')
+    
+    return dataset, src_vocab, trg_vocab, train_data, valid_data, test_data, train_m, val_m, test_m
+
+
+if __name__ == "__main__":
+
     """Main method to run the models"""
     set_SEED()
     args = parse_args()
-    train = pd.read_csv('/content/UIT-ViCoV19QA_train.csv',na_filter=False,delimiter='|')
-    val = pd.read_csv('/content/UIT-ViCoV19QA_val.csv',na_filter=False,delimiter='|')
-    test = pd.read_csv('/content/UIT-ViCoV19QA_test.csv',na_filter=False,delimiter='|')
-    dataset, src_vocab, trg_vocab, train_data, valid_data, test_data, train_m, val_m, test_m = prepare_data()
+    train_path = 'UIT-ViCoV19QA_train.csv'
+    valn_path = 'UIT-ViCoV19QA_val.csv'
+    test_path = 'UIT-ViCoV19QA_test.csv'
+    
+    train = pd.read_csv(train_path, na_filter=False,delimiter='|')
+    val = pd.read_csv(val_path, na_filter=False,delimiter='|')
+    test = pd.read_csv(test_path, na_filter=False,delimiter='|')
+    
+    dataset, src_vocab, trg_vocab, train_data, valid_data, test_data, train_m, val_m, test_m = prepare_data(train,val,test)
     print('--------------------------------')
     print(f'Model: {args.model}')
     print(f'Model input: {args.input}')
@@ -105,10 +146,7 @@ def main():
     # train data
     trainer = Trainer(optimizer, criterion, args.batch_size, DEVICE)
     trainer.train(model, train_data, valid_data, num_of_epochs=args.epochs_num)
-    
-    
-    ###############checked################
-    
+
     # load model
     model = Chechpoint.load(model)
 
@@ -123,7 +161,6 @@ def main():
     # evaluate model
     valid_loss = trainer.evaluator.evaluate(model, valid_iterator)
     test_loss = trainer.evaluator.evaluate(model, test_iterator)
-
 
 
     val_ref = [list(filter(None, np.delete(i,[0,1]))) for i in val.values]
@@ -154,17 +191,3 @@ def main():
 #     print(f'| Test Loss: {test_loss:.3f} | Test PPL: {math.exp(test_loss):7.3f} |')
 #     print(f'| Test Data Average BLEU score {test_scorer.average_score()} |')
 #     print(f'| Test Data Average METEOR score {test_scorer.average_meteor_score()} |')
-
-
-
-if __name__ == "__main__":
-    # set a seed value
-    SEED = 42
-    random.seed(SEED)
-    np.random.seed(SEED)
-    torch.manual_seed(SEED)
-    torch.cuda.manual_seed(SEED)
-    torch.cuda.manual_seed_all(SEED)
-    torch.backends.cudnn.enabled = False
-    torch.backends.cudnn.deterministic = True
-    main()
