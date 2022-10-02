@@ -138,7 +138,7 @@ def main():
     #valid_scorer = BleuScorer()
     test_scorer = BleuScorer()
     
-    #valid_scorer.data_score(new_valid, predictor,path)
+    #valid_scorer.data_score(new_val, predictor,path)
     test_scorer.data_score(new_test, predictor,path)
     
     r = {'ppl':[round(math.exp(test_loss),3)],
