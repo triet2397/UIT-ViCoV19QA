@@ -13,3 +13,11 @@ Some parts of the source code were inherited from the publication at https://git
 Mr. Triet Minh Thai:  19522397@gm.uit.edu.vn   
 Mr. Son T. Luu: sonlt@uit.edu.vn
 
+# Citation
+
+    @article{thai2022vicov19qa,
+      title={UIT-ViCoV19QA: A Dataset for COVID-19 Community-based Question Answering on Vietnamese Language},
+      author={Thai, Triet Minh and Chu, Ngan Ha-Thao and Vo, Anh Tuan and Luu, Son T.},
+      journal={arXiv preprint arXiv:2209.06668},
+      year={2022}
+    }
